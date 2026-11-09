@@ -1,5 +1,3 @@
-using System;
-
 namespace MesaPartesDigital
 {
     // Trabajador que usa el sistema (quien recepciona documentos)
@@ -9,20 +7,13 @@ namespace MesaPartesDigital
         public string Nombre { get; set; } = "";       // nombre completo
         public string Contrasena { get; set; } = "";
     }
-
-    // Expediente = datos del ciudadano/organización + datos del documento
+ 
+    // Expediente: solo 4 datos
     public class Expediente
     {
-        public string Codigo { get; set; } = "";            // Ej: EXP-0001
-        public string TipoTramitante { get; set; } = "";    // Persona / Organización
-        public string Documento { get; set; } = "";         // DNI (8) o RUC (11)
-        public string Nombre { get; set; } = "";            // Nombres o Razón Social
-        public string Telefono { get; set; } = "";
-        public string Correo { get; set; } = "";
-        public string Direccion { get; set; } = "";
-        public string TipoDocumento { get; set; } = "";     // Oficio, Solicitud, Carta...
-        public string Asunto { get; set; } = "";
-        public int Folios { get; set; }
-        public DateTime FechaHora { get; set; }
+        public string Codigo { get; set; } = "";       // Ej: EXP-2026-001
+        public string Ciudadano { get; set; } = "";    // Ciudadano / remitente (persona u organización)
+        public string Documento { get; set; } = "";    // Documento de identidad: DNI (8) o RUC (11)
+        public string Asunto { get; set; } = "";       // Asunto del trámite
     }
 }
