@@ -1,188 +1,151 @@
 using System;
-using System.Net.Mail;
+using System.Drawing;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
-
+ 
 namespace MesaPartesDigital
 {
     // FORMULARIO 3: REGISTRO DE EXPEDIENTES
-    // Recibe los datos, los valida y los guarda en expedientes.txt
+    // Solo pide 4 datos: código, ciudadano/remitente, documento de identidad y asunto.
+    // Los valida y los guarda en expedientes.txt
     public class frmRegistroExpedientes : Form
     {
-        TextBox txtCodigo, txtDocumento, txtNombre, txtTelefono, txtCorreo, txtDireccion, txtAsunto;
-        ComboBox cboTramitante, cboTipoDoc;
-        NumericUpDown numFolios;
-        DateTimePicker dtpFecha;
+        TextBox txtCodigo, txtCiudadano, txtDocumento, txtAsunto;
         Button btnGuardar, btnLimpiar, btnCancelar;
-
+ 
         public frmRegistroExpedientes()
         {
             Text = "Registro de Expedientes";
-            Width = 520;
-            Height = 560;
+            ClientSize = new Size(560, 465);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
-
-            int x1 = 30, x2 = 190, y = 20, salto = 40;
-
-            UI.Etiqueta(this, "Código de expediente:", x1, y + 3);
-            txtCodigo = UI.Caja(this, x2, y, 280);
-            txtCodigo.ReadOnly = true;          // se genera solo
-            y += salto;
-
-            UI.Etiqueta(this, "Tipo de tramitante:", x1, y + 3);
-            cboTramitante = UI.Combo(this, x2, y, 280, "Persona", "Organización");
-            y += salto;
-
-            UI.Etiqueta(this, "DNI / RUC:", x1, y + 3);
-            txtDocumento = UI.Caja(this, x2, y, 280);
-            y += salto;
-
-            UI.Etiqueta(this, "Nombres / Razón social:", x1, y + 3);
-            txtNombre = UI.Caja(this, x2, y, 280);
-            y += salto;
-
-            UI.Etiqueta(this, "Teléfono:", x1, y + 3);
-            txtTelefono = UI.Caja(this, x2, y, 280);
-            y += salto;
-
-            UI.Etiqueta(this, "Correo electrónico:", x1, y + 3);
-            txtCorreo = UI.Caja(this, x2, y, 280);
-            y += salto;
-
-            UI.Etiqueta(this, "Dirección:", x1, y + 3);
-            txtDireccion = UI.Caja(this, x2, y, 280);
-            y += salto;
-
-            UI.Etiqueta(this, "Tipo de documento:", x1, y + 3);
-            cboTipoDoc = UI.Combo(this, x2, y, 280, "Solicitud", "Oficio", "Carta", "Informe", "Otro");
-            y += salto;
-
-            UI.Etiqueta(this, "Asunto:", x1, y + 3);
-            txtAsunto = UI.Caja(this, x2, y, 280);
-            y += salto;
-
-            UI.Etiqueta(this, "Número de folios:", x1, y + 3);
-            numFolios = new NumericUpDown();
-            numFolios.Location = new System.Drawing.Point(x2, y);
-            numFolios.Width = 80;
-            numFolios.Minimum = 1;
-            numFolios.Maximum = 1000;
-            Controls.Add(numFolios);
-            y += salto;
-
-            UI.Etiqueta(this, "Fecha y hora de recepción:", x1, y + 3);
-            dtpFecha = new DateTimePicker();
-            dtpFecha.Location = new System.Drawing.Point(x2, y);
-            dtpFecha.Width = 280;
-            dtpFecha.Format = DateTimePickerFormat.Custom;
-            dtpFecha.CustomFormat = "dd/MM/yyyy HH:mm";
-            Controls.Add(dtpFecha);
-            y += salto + 10;
-
-            btnGuardar = UI.Boton(this, "Guardar", 80, y, 100);
-            btnLimpiar = UI.Boton(this, "Limpiar", 200, y, 100);
-            btnCancelar = UI.Boton(this, "Cancelar", 320, y, 100);
-
+            MinimizeBox = false;
+            BackColor = UI.Fondo;
+            Font = UI.Fuente;
+ 
+            UI.Encabezado(this, "Nuevo expediente", "Complete los 4 datos para registrar el trámite");
+ 
+            // ----- Tarjeta con los 4 campos -----
+            Panel card = UI.Tarjeta(this, "Datos del expediente", 20, 85, 520, 305);
+ 
+            UI.EtiquetaCampo(card, "Código (ejemplo: EXP-2026-001)", 20, 45);
+            txtCodigo = UI.Caja(card, 20, 67, 480);
+            txtCodigo.MaxLength = 12;
+            txtCodigo.CharacterCasing = CharacterCasing.Upper;   // escribe en mayúsculas
+ 
+            UI.EtiquetaCampo(card, "Ciudadano / remitente", 20, 110);
+            txtCiudadano = UI.Caja(card, 20, 132, 480);
+            txtCiudadano.MaxLength = 100;
+ 
+            UI.EtiquetaCampo(card, "Documento de identidad (DNI de 8 dígitos o RUC de 11)", 20, 175);
+            txtDocumento = UI.Caja(card, 20, 197, 480);
+            txtDocumento.MaxLength = 11;
+ 
+            UI.EtiquetaCampo(card, "Asunto del trámite", 20, 240);
+            txtAsunto = UI.Caja(card, 20, 262, 480);
+            txtAsunto.MaxLength = 200;
+ 
+            // ----- Botones -----
+            btnGuardar = UI.Boton(this, "Validar y guardar", 20, 405, 190);
+            btnLimpiar = UI.Boton(this, "Limpiar campos", 220, 405, 150);
+            btnCancelar = UI.Boton(this, "Cancelar", 380, 405, 120);
+ 
+            btnGuardar.Height = 38;
+            btnLimpiar.Height = 38;
+            btnCancelar.Height = 38;
+            UI.EstiloBoton(btnGuardar, true);
+            UI.EstiloBoton(btnLimpiar, false);
+            UI.EstiloBoton(btnCancelar, false);
+ 
+            // ----- Eventos -----
+            txtDocumento.KeyPress += SoloDigitos;
             btnGuardar.Click += btnGuardar_Click;
             btnLimpiar.Click += (s, e) => LimpiarCampos();
             btnCancelar.Click += (s, e) => Close();
-
-            LimpiarCampos();
+ 
+            AcceptButton = btnGuardar;      // Enter = guardar
+            CancelButton = btnCancelar;     // Esc = cerrar
         }
-
+ 
+        // Solo deja escribir números en el documento de identidad
+        void SoloDigitos(object? sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+ 
         void LimpiarCampos()
         {
-            txtCodigo.Text = Datos.GenerarCodigo();
-            cboTramitante.SelectedIndex = 0;
+            txtCodigo.Clear();
+            txtCiudadano.Clear();
             txtDocumento.Clear();
-            txtNombre.Clear();
-            txtTelefono.Clear();
-            txtCorreo.Clear();
-            txtDireccion.Clear();
-            cboTipoDoc.SelectedIndex = 0;
             txtAsunto.Clear();
-            numFolios.Value = 1;
-            dtpFecha.Value = DateTime.Now;
-            txtDocumento.Focus();
+            txtCodigo.Focus();
         }
-
-        void btnGuardar_Click(object sender, EventArgs e)
+ 
+        void btnGuardar_Click(object? sender, EventArgs e)
         {
-            // ----- VALIDACIONES -----
+            string codigo = txtCodigo.Text.Trim();
+            string ciudadano = txtCiudadano.Text.Trim();
             string documento = txtDocumento.Text.Trim();
-            bool esPersona = cboTramitante.Text == "Persona";
-
-            if (!SoloNumeros(documento))
+            string asunto = txtAsunto.Text.Trim();
+ 
+            // ----- VALIDACIONES -----
+ 
+            // 1. Código con formato EXP-AAAA-NNN (año de 4 dígitos y número de 3 dígitos)
+            if (!Regex.IsMatch(codigo, @"^EXP-[0-9]{4}-[0-9]{3}$"))
             {
-                Error("El DNI / RUC solo debe contener números.");
+                Error("El código debe tener el formato EXP-2026-001\n(EXP, año de 4 dígitos y número de 3 dígitos).", txtCodigo);
                 return;
             }
-            if (esPersona && documento.Length != 8)
+ 
+            // 2. Código no repetido
+            if (Datos.CodigoExiste(codigo))
             {
-                Error("El DNI debe tener 8 dígitos.");
+                Error("Ya existe un expediente con el código " + codigo + ".", txtCodigo);
                 return;
             }
-            if (!esPersona && documento.Length != 11)
+ 
+            // 3. Ciudadano / remitente
+            if (ciudadano.Length < 3)
             {
-                Error("El RUC debe tener 11 dígitos.");
+                Error("Ingrese el nombre del ciudadano o la razón social (mínimo 3 caracteres).", txtCiudadano);
                 return;
             }
-            if (txtNombre.Text.Trim() == "")
+ 
+            // 4. Documento: DNI (8 dígitos) o RUC (11 dígitos), solo números
+            if (!SoloNumeros(documento) || (documento.Length != 8 && documento.Length != 11))
             {
-                Error("Ingrese los nombres o la razón social.");
+                Error("El documento debe ser un DNI de 8 dígitos o un RUC de 11 dígitos.", txtDocumento);
                 return;
             }
-            if (!SoloNumeros(txtTelefono.Text.Trim()) || txtTelefono.Text.Trim().Length != 9)
+ 
+            // 5. Asunto
+            if (asunto == "")
             {
-                Error("El teléfono debe tener 9 dígitos.");
+                Error("Ingrese el asunto del trámite.", txtAsunto);
                 return;
             }
-            if (!CorreoValido(txtCorreo.Text.Trim()))
-            {
-                Error("El correo electrónico no es válido.");
-                return;
-            }
-            if (txtDireccion.Text.Trim() == "")
-            {
-                Error("Ingrese la dirección.");
-                return;
-            }
-            if (txtAsunto.Text.Trim() == "")
-            {
-                Error("Ingrese el asunto del documento.");
-                return;
-            }
-            if (Datos.CodigoExiste(txtCodigo.Text))
-            {
-                Error("El código de expediente ya existe.");
-                return;
-            }
-
+ 
             // ----- GUARDAR -----
             Expediente exp = new Expediente();
-            exp.Codigo = txtCodigo.Text;
-            exp.TipoTramitante = cboTramitante.Text;
+            exp.Codigo = codigo;
+            exp.Ciudadano = ciudadano;
             exp.Documento = documento;
-            exp.Nombre = txtNombre.Text.Trim();
-            exp.Telefono = txtTelefono.Text.Trim();
-            exp.Correo = txtCorreo.Text.Trim();
-            exp.Direccion = txtDireccion.Text.Trim();
-            exp.TipoDocumento = cboTipoDoc.Text;
-            exp.Asunto = txtAsunto.Text.Trim();
-            exp.Folios = (int)numFolios.Value;
-            exp.FechaHora = dtpFecha.Value;
-
+            exp.Asunto = asunto;
+ 
             Datos.Expedientes.Add(exp);
             Datos.GuardarExpedientes();
-
+ 
             MessageBox.Show("Expediente registrado correctamente.\nCódigo: " + exp.Codigo,
                 "Registro exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+ 
             LimpiarCampos();
         }
-
-        // ----- Funciones de validación -----
+ 
         bool SoloNumeros(string texto)
         {
             if (texto == "") return false;
@@ -192,23 +155,12 @@ namespace MesaPartesDigital
             }
             return true;
         }
-
-        bool CorreoValido(string correo)
-        {
-            try
-            {
-                MailAddress m = new MailAddress(correo);
-                return m.Address == correo;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        void Error(string mensaje)
+ 
+        // Muestra el error y lleva el cursor al campo que falló
+        void Error(string mensaje, Control campo)
         {
             MessageBox.Show(mensaje, "Error de validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            campo.Focus();
         }
     }
 }
