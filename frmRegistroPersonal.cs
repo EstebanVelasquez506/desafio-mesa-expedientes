@@ -53,6 +53,7 @@ namespace MesaPartesDigital
             btnGuardar.Click += btnGuardar_Click;
             btnLimpiar.Click += (s, e) => LimpiarCampos();
             btnCancelar.Click += (s, e) => Close();
+            AcceptButton = btnGuardar;   // Enter = guardar
             CancelButton = btnCancelar;
         }
 
