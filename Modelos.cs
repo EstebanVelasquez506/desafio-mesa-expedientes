@@ -6,8 +6,14 @@ namespace MesaPartesDigital
         public string Codigo { get; set; } = "";       // usuario para el login
         public string Nombre { get; set; } = "";       // nombre completo
         public string Contrasena { get; set; } = "";
+
+        // El administrador es el usuario "admin" (el que se crea automáticamente al inicio)
+        public bool EsAdministrador
+        {
+            get { return Codigo.Equals("admin", System.StringComparison.OrdinalIgnoreCase); }
+        }
     }
- 
+
     // Expediente: solo 4 datos
     public class Expediente
     {
