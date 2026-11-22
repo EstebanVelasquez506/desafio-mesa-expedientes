@@ -7,8 +7,12 @@ namespace MesaPartesDigital
     // FORMULARIO 2: MENÚ PRINCIPAL
     public class frmPrincipal : Form
     {
+        Usuario usuarioActual;
+
         public frmPrincipal(Usuario usuario)
         {
+            usuarioActual = usuario;
+
             Text = "Mesa de Partes Digital - Menú Principal";
             ClientSize = new Size(760, 380);
             StartPosition = FormStartPosition.CenterScreen;
@@ -29,13 +33,17 @@ namespace MesaPartesDigital
             mnuExpedientes.DropDownItems.Add("Gestión de Expedientes", null, (s, e) => new frmGestionExpedientes().ShowDialog());
 
             ToolStripMenuItem mnuPersonal = new ToolStripMenuItem("Personal");
-            mnuPersonal.DropDownItems.Add("Registro de Personal", null, (s, e) => new frmRegistroPersonal().ShowDialog());
+            mnuPersonal.DropDownItems.Add("Registro de Personal", null, (s, e) => AbrirRegistroPersonal());
+
+            ToolStripMenuItem mnuUsuarios = new ToolStripMenuItem("Usuarios registrados");
+            mnuUsuarios.Click += (s, e) => new frmListaUsuarios(usuarioActual).ShowDialog();
 
             ToolStripMenuItem mnuSalir = new ToolStripMenuItem("Salir");
             mnuSalir.Click += (s, e) => Close();
 
             menu.Items.Add(mnuExpedientes);
             menu.Items.Add(mnuPersonal);
+            menu.Items.Add(mnuUsuarios);
             menu.Items.Add(mnuSalir);
             MainMenuStrip = menu;
             Controls.Add(menu);
@@ -58,7 +66,19 @@ namespace MesaPartesDigital
 
             b1.Click += (s, e) => new frmRegistroExpedientes().ShowDialog();
             b2.Click += (s, e) => new frmGestionExpedientes().ShowDialog();
-            b3.Click += (s, e) => new frmRegistroPersonal().ShowDialog();
+            b3.Click += (s, e) => AbrirRegistroPersonal();
+        }
+
+        // Solo el administrador puede entrar al registro de personal
+        void AbrirRegistroPersonal()
+        {
+            if (!usuarioActual.EsAdministrador)
+            {
+                MessageBox.Show("Acceso denegado.\nSolo el administrador puede registrar personal.",
+                    "Acceso denegado", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+            new frmRegistroPersonal().ShowDialog();
         }
     }
 }
