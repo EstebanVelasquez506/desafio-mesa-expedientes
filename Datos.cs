@@ -13,10 +13,6 @@ namespace MesaPartesDigital
         static string rutaUsuarios = Path.Combine(carpeta, "usuarios.dat");
         static string rutaExpedientes = Path.Combine(carpeta, "expedientes.dat");
 
-        // Archivos de texto de versiones anteriores (solo se leen una vez para migrar los datos)
-        static string rutaUsuariosTxt = Path.Combine(carpeta, "usuarios.txt");
-        static string rutaExpedientesTxt = Path.Combine(carpeta, "expedientes.txt");
-
         public static List<Usuario> Usuarios = new List<Usuario>();
         public static List<Expediente> Expedientes = new List<Expediente>();
 
@@ -38,31 +34,22 @@ namespace MesaPartesDigital
                     int cantidad = br.ReadInt32();
                     for (int i = 0; i < cantidad; i++)
                     {
-                        // Los argumentos se evalúan en orden: Codigo, Nombre, Contrasena
-                        Usuarios.Add(new Usuario(br.ReadString(), br.ReadString(), br.ReadString()));
+                        Usuario u = new Usuario();
+                        u.Codigo = br.ReadString();
+                        u.Nombre = br.ReadString();
+                        u.Contraseña = br.ReadString();
+                        Usuarios.Add(u);
                     }
                 }
                 return;
             }
 
-            // Migración: si existe el usuarios.txt antiguo, se importa y se guarda en binario
-            if (File.Exists(rutaUsuariosTxt))
-            {
-                foreach (string linea in File.ReadAllLines(rutaUsuariosTxt))
-                {
-                    string[] c = linea.Split('|');
-                    if (c.Length >= 3)
-                    {
-                        Usuarios.Add(new Usuario(c[0], c[1], c[2]));
-                    }
-                }
-            }
-
-            // Si no había nada que migrar, se crea un usuario inicial: admin / admin123
-            if (Usuarios.Count == 0)
-            {
-                Usuarios.Add(new Usuario("admin", "Administrador", "admin123"));
-            }
+            // Si no existe el archivo, se crea un usuario inicial: admin / admin123
+            Usuario admin = new Usuario();
+            admin.Codigo = "admin";
+            admin.Nombre = "Administrador";
+            admin.Contraseña = "admin123";
+            Usuarios.Add(admin);
             GuardarUsuarios();
         }
 
@@ -70,39 +57,21 @@ namespace MesaPartesDigital
         {
             Expedientes.Clear();
 
-            if (File.Exists(rutaExpedientes))
+            if (!File.Exists(rutaExpedientes)) return;
+
+            using (BinaryReader br = new BinaryReader(File.Open(rutaExpedientes, FileMode.Open, FileAccess.Read)))
             {
-                using (BinaryReader br = new BinaryReader(File.Open(rutaExpedientes, FileMode.Open, FileAccess.Read)))
+                int cantidad = br.ReadInt32();
+                for (int i = 0; i < cantidad; i++)
                 {
-                    int cantidad = br.ReadInt32();
-                    for (int i = 0; i < cantidad; i++)
-                    {
-                        // Los argumentos se evalúan en orden: Codigo, Ciudadano, Documento, Asunto
-                        Expedientes.Add(new Expediente(br.ReadString(), br.ReadString(), br.ReadString(), br.ReadString()));
-                    }
-                }
-                return;
-            }
-
-            // Migración: si existe el expedientes.txt antiguo, se importa y se guarda en binario
-            if (!File.Exists(rutaExpedientesTxt)) return;
-
-            foreach (string linea in File.ReadAllLines(rutaExpedientesTxt))
-            {
-                string[] c = linea.Split('|');
-
-                if (c.Length == 4)
-                {
-                    // Formato: Codigo|Ciudadano|Documento|Asunto
-                    Expedientes.Add(new Expediente(c[0], c[1], c[2], c[3]));
-                }
-                else if (c.Length >= 11)
-                {
-                    // Formato anterior (11 campos): se conservan solo los 4 datos que usa ahora el sistema
-                    Expedientes.Add(new Expediente(c[0], c[3], c[2], c[8]));
+                    Expediente exp = new Expediente();
+                    exp.Codigo = br.ReadString();
+                    exp.Ciudadano = br.ReadString();
+                    exp.Documento = br.ReadString();
+                    exp.Asunto = br.ReadString();
+                    Expedientes.Add(exp);
                 }
             }
-            GuardarExpedientes();
         }
 
         // ---------- GUARDAR ----------
@@ -113,9 +82,9 @@ namespace MesaPartesDigital
                 bw.Write(Usuarios.Count);
                 foreach (Usuario u in Usuarios)
                 {
-                    bw.Write(u.Codigo ?? "");
-                    bw.Write(u.Nombre ?? "");
-                    bw.Write(u.Contraseña ?? "");
+                    bw.Write(u.Codigo);
+                    bw.Write(u.Nombre);
+                    bw.Write(u.Contraseña);
                 }
             }
         }
@@ -127,15 +96,21 @@ namespace MesaPartesDigital
                 bw.Write(Expedientes.Count);
                 foreach (Expediente e in Expedientes)
                 {
-                    bw.Write(e.Codigo ?? "");
-                    bw.Write(e.Ciudadano ?? "");
-                    bw.Write(e.Documento ?? "");
-                    bw.Write(e.Asunto ?? "");
+                    bw.Write(e.Codigo);
+                    bw.Write(e.Ciudadano);
+                    bw.Write(e.Documento);
+                    bw.Write(e.Asunto);
                 }
             }
         }
 
         // ---------- UTILIDADES ----------
+        // El administrador es el usuario "admin" (el que se crea automáticamente al inicio)
+        public static bool EsAdministrador(Usuario u)
+        {
+            return string.Equals(u.Codigo, "admin", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool CodigoExiste(string codigo)
         {
             foreach (Expediente e in Expedientes)
@@ -148,13 +123,27 @@ namespace MesaPartesDigital
         // Con estructuras se elimina por CÓDIGO (la clave), no por referencia al objeto
         public static void EliminarUsuario(string codigo)
         {
-            Usuarios.RemoveAll(u => string.Equals(u.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
+            for (int i = 0; i < Usuarios.Count; i++)
+            {
+                if (string.Equals(Usuarios[i].Codigo, codigo, StringComparison.OrdinalIgnoreCase))
+                {
+                    Usuarios.RemoveAt(i);
+                    break;
+                }
+            }
             GuardarUsuarios();
         }
 
         public static void EliminarExpediente(string codigo)
         {
-            Expedientes.RemoveAll(e => string.Equals(e.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
+            for (int i = 0; i < Expedientes.Count; i++)
+            {
+                if (string.Equals(Expedientes[i].Codigo, codigo, StringComparison.OrdinalIgnoreCase))
+                {
+                    Expedientes.RemoveAt(i);
+                    break;
+                }
+            }
             GuardarExpedientes();
         }
 
