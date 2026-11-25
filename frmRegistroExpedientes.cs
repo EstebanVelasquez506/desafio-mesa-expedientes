@@ -131,7 +131,11 @@ namespace MesaPartesDigital
             }
 
             // ----- GUARDAR -----
-            Expediente exp = new Expediente(codigo, ciudadano, documento, asunto);
+            Expediente exp = new Expediente();
+            exp.Codigo = codigo;
+            exp.Ciudadano = ciudadano;
+            exp.Documento = documento;
+            exp.Asunto = asunto;
 
             Datos.Expedientes.Add(exp);
             Datos.GuardarExpedientes();
