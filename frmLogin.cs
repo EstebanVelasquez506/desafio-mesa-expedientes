@@ -62,7 +62,7 @@ namespace MesaPartesDigital
             // Busca el usuario en la lista
             foreach (Usuario u in Datos.Usuarios)
             {
-                if (u.Codigo == usuario && u.Contrasena == clave)
+                if (u.Codigo.Equals(usuario, StringComparison.OrdinalIgnoreCase) && u.Contraseña == clave)
                 {
                     // Acceso concedido: abre el formulario principal
                     frmPrincipal principal = new frmPrincipal(u);
