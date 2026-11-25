@@ -72,7 +72,7 @@ namespace MesaPartesDigital
         // Solo el administrador puede entrar al registro de personal
         void AbrirRegistroPersonal()
         {
-            if (!usuarioActual.EsAdministrador)
+            if (!Datos.EsAdministrador(usuarioActual))
             {
                 MessageBox.Show("Acceso denegado.\nSolo el administrador puede registrar personal.",
                     "Acceso denegado", MessageBoxButtons.OK, MessageBoxIcon.Stop);
