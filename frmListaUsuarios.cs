@@ -111,8 +111,8 @@ namespace MesaPartesDigital
                 return;
             }
 
-            Usuario? u = dgv.SelectedRows[0].Tag as Usuario;
-            if (u == null) return;
+            // Con estructuras no se puede usar "as"; se usa "is" (la fila guarda una copia del usuario)
+            if (dgv.SelectedRows[0].Tag is not Usuario u) return;
 
             if (u.EsAdministrador)
             {
@@ -126,8 +126,7 @@ namespace MesaPartesDigital
                 "Confirmar eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (r != DialogResult.Yes) return;
 
-            Datos.Usuarios.Remove(u);
-            Datos.GuardarUsuarios();
+            Datos.EliminarUsuario(u.Codigo);   // elimina por código y guarda el .dat
             Llenar();
             ActualizarTotal();
 
