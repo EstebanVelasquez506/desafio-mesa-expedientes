@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Forms;
- 
+
 namespace MesaPartesDigital
 {
     static class Program
@@ -10,12 +10,13 @@ namespace MesaPartesDigital
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
- 
-            // Carga los datos guardados en los archivos .txt
+
+            // Carga los datos guardados en los archivos binarios (.dat)
             Datos.Cargar();
- 
+
             // El programa inicia con el formulario de Login
             Application.Run(new frmLogin());
         }
     }
 }
+
