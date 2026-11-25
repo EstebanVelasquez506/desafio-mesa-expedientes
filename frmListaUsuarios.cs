@@ -4,79 +4,134 @@ using System.Windows.Forms;
 
 namespace MesaPartesDigital
 {
-    // FORMULARIO 1: LOGIN
-    public class frmLogin : Form
+    // FORMULARIO 6: LISTA DE USUARIOS REGISTRADOS
+    // Muestra los trabajadores registrados (no muestra las contraseñas)
+    public class frmListaUsuarios : Form
     {
-        TextBox txtUsuario;
-        TextBox txtContrasena;
-        Button btnIngresar;
-        Button btnSalir;
+        DataGridView dgv;
+        Label lblTotal;
+        Usuario usuarioActual;
 
-        public frmLogin()
+        public frmListaUsuarios(Usuario usuario)
         {
-            Text = "Mesa de Partes Digital - Login";
-            ClientSize = new Size(400, 375);
-            StartPosition = FormStartPosition.CenterScreen;
+            usuarioActual = usuario;
+
+            Text = "Usuarios registrados";
+            ClientSize = new Size(600, 440);
+            StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
+            MinimizeBox = false;
             BackColor = UI.Fondo;
             Font = UI.Fuente;
 
-            UI.Encabezado(this, "Mesa de Partes Digital", "Municipalidad Distrital");
+            UI.Encabezado(this, "Usuarios registrados", "Trabajadores que pueden ingresar al sistema");
 
-            // ----- Tarjeta con el formulario -----
-            Panel card = UI.Tarjeta(this, "Iniciar sesión", 30, 95, 340, 255);
+            // ----- Tabla -----
+            dgv = new DataGridView();
+            dgv.Location = new Point(20, 85);
+            dgv.Size = new Size(560, 290);
+            dgv.ReadOnly = true;
+            dgv.AllowUserToAddRows = false;
+            dgv.AllowUserToDeleteRows = false;
+            dgv.AllowUserToResizeRows = false;
+            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv.MultiSelect = false;
+            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgv.RowHeadersVisible = false;
+            dgv.BackgroundColor = Color.White;
+            dgv.BorderStyle = BorderStyle.None;
+            dgv.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgv.GridColor = UI.Gris;
+            dgv.RowTemplate.Height = 28;
 
-            UI.EtiquetaCampo(card, "Usuario", 20, 50);
-            txtUsuario = UI.Caja(card, 20, 72, 300);
+            dgv.EnableHeadersVisualStyles = false;
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = UI.AzulOscuro;
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgv.ColumnHeadersDefaultCellStyle.SelectionBackColor = UI.AzulOscuro;
+            dgv.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
 
-            UI.EtiquetaCampo(card, "Contraseña", 20, 115);
-            txtContrasena = UI.Caja(card, 20, 137, 300);
-            txtContrasena.UseSystemPasswordChar = true;   // oculta lo que se escribe
+            dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(243, 246, 252);
+            dgv.DefaultCellStyle.SelectionBackColor = Color.FromArgb(191, 219, 254);
+            dgv.DefaultCellStyle.SelectionForeColor = Color.Black;
+            Controls.Add(dgv);
 
-            btnIngresar = UI.Boton(card, "Ingresar", 20, 195, 145);
-            btnSalir = UI.Boton(card, "Salir", 175, 195, 145);
-            btnIngresar.Height = 38;
-            btnSalir.Height = 38;
-            UI.EstiloBoton(btnIngresar, true);
-            UI.EstiloBoton(btnSalir, false);
+            dgv.Columns.Add("colUsuario", "Usuario");
+            dgv.Columns.Add("colNombre", "Nombre completo");
+            dgv.Columns.Add("colRol", "Rol");
 
-            btnIngresar.Click += btnIngresar_Click;
-            btnSalir.Click += (s, e) => Application.Exit();
+            Llenar();
 
-            AcceptButton = btnIngresar;   // Enter = Ingresar
+            // ----- Parte inferior -----
+            lblTotal = UI.Etiqueta(this, "", 20, 392);
+            lblTotal.ForeColor = UI.TextoGris;
+            ActualizarTotal();
+
+            // El botón Eliminar solo lo ve el administrador
+            if (Datos.EsAdministrador(usuarioActual))
+            {
+                Button btnEliminar = UI.Boton(this, "Eliminar usuario", 300, 387, 170);
+                UI.EstiloBoton(btnEliminar, false);
+                btnEliminar.BackColor = UI.Rojo;
+                btnEliminar.ForeColor = Color.White;
+                btnEliminar.Click += btnEliminar_Click;
+            }
+
+            Button btnCerrar = UI.Boton(this, "Cerrar", 480, 387, 100);
+            UI.EstiloBoton(btnCerrar, false);
+            btnCerrar.Click += (s, e) => Close();
+            CancelButton = btnCerrar;
         }
 
-        void btnIngresar_Click(object? sender, EventArgs e)
+        void Llenar()
         {
-            string usuario = txtUsuario.Text.Trim();
-            string clave = txtContrasena.Text;
-
-            if (usuario == "" || clave == "")
+            dgv.Rows.Clear();
+            foreach (Usuario u in Datos.Usuarios)
             {
-                MessageBox.Show("Ingrese usuario y contraseña.", "Aviso",
+                int fila = dgv.Rows.Add(u.Codigo, u.Nombre, Datos.EsAdministrador(u) ? "Administrador" : "Personal");
+                dgv.Rows[fila].Tag = u;   // guarda el usuario en la fila
+            }
+            dgv.ClearSelection();
+        }
+
+        void ActualizarTotal()
+        {
+            lblTotal.Text = "Total de usuarios: " + Datos.Usuarios.Count;
+        }
+
+        void btnEliminar_Click(object? sender, EventArgs e)
+        {
+            // Seguridad extra: solo el administrador puede eliminar
+            if (!Datos.EsAdministrador(usuarioActual)) return;
+
+            if (dgv.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Seleccione un usuario de la lista.", "Aviso",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Busca el usuario en la lista
-            foreach (Usuario u in Datos.Usuarios)
+            // La fila guarda una copia de la estructura en Tag; se recupera con una conversión
+            Usuario u = Datos.Usuarios[dgv.SelectedRows[0].Index];
+
+            if (Datos.EsAdministrador(u))
             {
-                if (u.Codigo.Equals(usuario, StringComparison.OrdinalIgnoreCase) && u.Contraseña == clave)
-                {
-                    // Acceso concedido: abre el formulario principal
-                    frmPrincipal principal = new frmPrincipal(u);
-                    principal.FormClosed += (s, ev) => this.Close();
-                    this.Hide();
-                    principal.Show();
-                    return;
-                }
+                MessageBox.Show("No se puede eliminar al administrador.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
 
-            MessageBox.Show("Usuario o contraseña incorrectos.", "Acceso denegado",
-                MessageBoxButtons.OK, MessageBoxIcon.Error);
-            txtContrasena.Clear();
-            txtContrasena.Focus();
+            DialogResult r = MessageBox.Show(
+                "¿Seguro que desea eliminar al usuario \"" + u.Codigo + "\" (" + u.Nombre + ")?",
+                "Confirmar eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (r != DialogResult.Yes) return;
+
+            Datos.EliminarUsuario(u.Codigo);   // elimina por código y guarda el .dat
+            Llenar();
+            ActualizarTotal();
+
+            MessageBox.Show("Usuario eliminado correctamente.", "Eliminado",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
