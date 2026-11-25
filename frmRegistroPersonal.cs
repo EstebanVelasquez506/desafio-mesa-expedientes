@@ -97,7 +97,10 @@ namespace MesaPartesDigital
                 }
             }
 
-            Usuario nuevo = new Usuario(codigo, nombre, txtContrasena.Text);
+            Usuario nuevo = new Usuario();
+            nuevo.Codigo = codigo;
+            nuevo.Nombre = nombre;
+            nuevo.Contraseña = txtContrasena.Text;
 
             Datos.Usuarios.Add(nuevo);
             Datos.GuardarUsuarios();
