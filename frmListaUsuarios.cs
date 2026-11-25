@@ -68,7 +68,7 @@ namespace MesaPartesDigital
             ActualizarTotal();
 
             // El botón Eliminar solo lo ve el administrador
-            if (usuarioActual.EsAdministrador)
+            if (Datos.EsAdministrador(usuarioActual))
             {
                 Button btnEliminar = UI.Boton(this, "Eliminar usuario", 300, 387, 170);
                 UI.EstiloBoton(btnEliminar, false);
@@ -88,7 +88,7 @@ namespace MesaPartesDigital
             dgv.Rows.Clear();
             foreach (Usuario u in Datos.Usuarios)
             {
-                int fila = dgv.Rows.Add(u.Codigo, u.Nombre, u.EsAdministrador ? "Administrador" : "Personal");
+                int fila = dgv.Rows.Add(u.Codigo, u.Nombre, Datos.EsAdministrador(u) ? "Administrador" : "Personal");
                 dgv.Rows[fila].Tag = u;   // guarda el usuario en la fila
             }
             dgv.ClearSelection();
@@ -102,7 +102,7 @@ namespace MesaPartesDigital
         void btnEliminar_Click(object? sender, EventArgs e)
         {
             // Seguridad extra: solo el administrador puede eliminar
-            if (!usuarioActual.EsAdministrador) return;
+            if (!Datos.EsAdministrador(usuarioActual)) return;
 
             if (dgv.SelectedRows.Count == 0)
             {
@@ -111,10 +111,10 @@ namespace MesaPartesDigital
                 return;
             }
 
-            // Con estructuras no se puede usar "as"; se usa "is" (la fila guarda una copia del usuario)
-            if (dgv.SelectedRows[0].Tag is not Usuario u) return;
+            // La fila guarda una copia de la estructura en Tag; se recupera con una conversión
+            Usuario u = Datos.Usuarios[dgv.SelectedRows[0].Index];
 
-            if (u.EsAdministrador)
+            if (Datos.EsAdministrador(u))
             {
                 MessageBox.Show("No se puede eliminar al administrador.", "Aviso",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
