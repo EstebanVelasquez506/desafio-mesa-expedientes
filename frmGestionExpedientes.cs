@@ -83,6 +83,13 @@ namespace MesaPartesDigital
             dgv.DefaultCellStyle.SelectionForeColor = Color.Black;
             Controls.Add(dgv);
 
+            // Columnas de la tabla (se llena fila por fila, sin DataSource)
+            dgv.Columns.Add("colCodigo", "Código");
+            dgv.Columns.Add("colCiudadano", "Ciudadano / remitente");
+            dgv.Columns.Add("colDocumento", "DNI / RUC");
+            int colAsunto = dgv.Columns.Add("colAsunto", "Asunto");
+            dgv.Columns[colAsunto].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;   // ocupa el espacio sobrante
+
             // ----- Botones inferiores -----
             btnOrdenarNombre = UI.Boton(this, "Ordenar por nombre", 20, 565, 160);
             btnOrdenarCodigo = UI.Boton(this, "Ordenar por código", 190, 565, 160);
@@ -121,36 +128,16 @@ namespace MesaPartesDigital
         void Mostrar(List<Expediente> lista)
         {
             listaMostrada = lista;
-            dgv.DataSource = null;
-            dgv.DataSource = listaMostrada;
+            dgv.Rows.Clear();
 
-            ConfigurarColumnas();
+            foreach (Expediente exp in listaMostrada)
+            {
+                int fila = dgv.Rows.Add(exp.Codigo, exp.Ciudadano, exp.Documento, exp.Asunto);
+                dgv.Rows[fila].Tag = exp;   // guarda el expediente (copia) en la fila
+            }
+
+            dgv.ClearSelection();
             lblTotal.Text = "Total: " + listaMostrada.Count + " expediente(s)";
-        }
-
-        // Nombres bonitos para los encabezados de la tabla
-        void ConfigurarColumnas()
-        {
-            Titulo("Codigo", "Código");
-            Titulo("Ciudadano", "Ciudadano / remitente");
-            Titulo("Documento", "DNI / RUC");
-            Titulo("Asunto", "Asunto");
-
-            // La columna Asunto ocupa el espacio que sobre
-            DataGridViewColumn? asunto = dgv.Columns["Asunto"];
-            if (asunto != null)
-            {
-                asunto.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            }
-        }
-
-        void Titulo(string columna, string texto)
-        {
-            DataGridViewColumn? c = dgv.Columns[columna];
-            if (c != null)
-            {
-                c.HeaderText = texto;
-            }
         }
 
         void MostrarTodos()
@@ -195,22 +182,22 @@ namespace MesaPartesDigital
 
         void btnEliminar_Click(object? sender, EventArgs e)
         {
-            Expediente? exp = dgv.CurrentRow?.DataBoundItem as Expediente;
-
-            if (exp == null)
+            if (dgv.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Seleccione un expediente de la tabla.", "Aviso",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
+            // La fila guarda una copia de la estructura en Tag; se recupera con una conversión
+            Expediente exp = listaMostrada[dgv.SelectedRows[0].Index];
+
             DialogResult r = MessageBox.Show("¿Eliminar el expediente " + exp.Codigo + "?",
                 "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (r == DialogResult.Yes)
             {
-                Datos.Expedientes.Remove(exp);
-                Datos.GuardarExpedientes();
+                Datos.EliminarExpediente(exp.Codigo);   // elimina por código y guarda el .dat
                 MostrarTodos();
             }
         }
